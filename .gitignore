@@ -1,0 +1,35 @@
+# Arduino / PlatformIO
+*.hex
+*.elf
+*.bin
+build/
+.pio/
+.pioenvs/
+.piolibdeps/
+
+# KiCad / EDA
+*-backups/
+*.kicad_pcb-bak
+*.kicad_sch-bak
+*.bak
+*.net
+fp-info-cache
+
+# CAD / 3D
+*.stl.zip
+*.f3d.lock
+
+# Sistemas operativos
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editores
+.vscode/
+.idea/
+*.swp
+
+# Temporales
+*.tmp
+*.log
+~$*
