@@ -1,0 +1,110 @@
+================================================================
+          LISTA DE MATERIALES - BRAZO ROBOTICO 6 GDL
+          UTN Facultad Regional Parana - Beca de Servicio 2026
+================================================================
+
+
+----------------------------------------------------------------
+ 1. ELECTRONICA DE CONTROL
+----------------------------------------------------------------
+ Cant.  Componente                      Detalle
+ -----  ------------------------------  --------------------------
+   1    Arduino Nano (ATmega328P)       Placa de control
+   1    Modulo Bluetooth HC-05          Comunicacion con celular/PC
+   3    Resistencia 1 kOhm 1/4 W        Divisor de tension RX HC-05
+                                        (R1, R2 y R3)
+
+
+----------------------------------------------------------------
+ 2. ACTUADORES
+----------------------------------------------------------------
+ Cant.  Componente                      Detalle
+ -----  ------------------------------  --------------------------
+   6    Servomotor MG996R               Uno por articulacion:
+                                        Dedos, Muneca, Mano, Codo,
+                                        Brazo y Hombro
+   3    Servomotor MG996R (repuesto)    Reemplazo de los 3 servos
+                                        que llegaron trabados/rotos
+
+
+----------------------------------------------------------------
+ 3. PLACA (PCB) Y CONECTORES
+----------------------------------------------------------------
+ Cant.  Componente                      Detalle
+ -----  ------------------------------  --------------------------
+   1    PCB de diseno propio            Aloja Nano, conectores y
+                                        divisor de tension
+   2    Tira hembra 1x15 (2,54 mm)      Zocalo del Arduino Nano
+  12    Tira hembra 1x3 (2,54 mm)       Conectores de servos
+                                        (D0 a D11)
+   1    Tira hembra 1x4 (2,54 mm)       Conector del HC-05
+   1    Tira hembra 1x8 (2,54 mm)       Entradas analogicas A0-A7
+
+
+----------------------------------------------------------------
+ 4. ESTRUCTURA Y VARIOS
+----------------------------------------------------------------
+ Cant.  Componente                      Detalle
+ -----  ------------------------------  --------------------------
+   1    Estructura del brazo            Eslabones y base giratoria
+   1    Carcasa de proteccion           Impresa en 3D en PLA
+                                        (Bambu Lab A1, Lab. TD III)
+   -    Cables Dupont / prolongadores   Conexion de servos
+   -    Tornilleria                     Montaje de servos y carcasa
+   -    Estano                          Soldadura de la PCB
+   1    Cable USB (Mini-USB)            Programacion del Nano
+
+
+----------------------------------------------------------------
+ 5. SOFTWARE Y HERRAMIENTAS
+----------------------------------------------------------------
+  - Arduino IDE (librerias Servo y SoftwareSerial)
+  - KiCad (esquematico y diseno de la PCB)
+  - App "Serial Bluetooth Terminal" (Android) para enviar comandos
+  - Soldador, multimetro y pinzas
+
+
+----------------------------------------------------------------
+ 6. LINKS DE COMPRA (Mercado Libre Argentina)
+----------------------------------------------------------------
+ Los links abren la busqueda de cada producto en Mercado Libre,
+ para comparar precios y vendedores (las publicaciones individuales
+ se dan de baja con frecuencia).
+
+ [Electronica de control]
+  Arduino Nano ........... https://listado.mercadolibre.com.ar/arduino-nano
+  Modulo HC-05 ........... https://listado.mercadolibre.com.ar/modulo-bluetooth-hc-05
+  Resistencias 1 kOhm .... https://listado.mercadolibre.com.ar/resistencia-1k-1-4w
+
+ [Actuadores]
+  Servo MG996R ........... https://listado.mercadolibre.com.ar/servo-mg996r
+
+ [Conectores]
+  Tira hembra 2,54 mm .... https://listado.mercadolibre.com.ar/tira-pines-hembra-2.54
+
+ [Varios]
+  Cables Dupont .......... https://listado.mercadolibre.com.ar/cables-dupont
+  Prolongador de servo ... https://listado.mercadolibre.com.ar/prolongador-servo
+  Estano ................. https://listado.mercadolibre.com.ar/estano-para-soldar
+  Cable Mini-USB ......... https://listado.mercadolibre.com.ar/cable-mini-usb
+
+ Recomendaciones al comprar:
+  - Servos: elegir MG996R con engranajes metalicos y comprar alguno
+    de repuesto (en este proyecto 3 de 6 llegaron defectuosos).
+  - Arduino Nano: los clones con chip CH340 necesitan su driver.
+  - Tiras hembra: conviene comprar tiras largas (1x40) y cortarlas
+    a la medida (1x15, 1x3, 1x4, 1x8).
+
+
+================================================================
+ RESUMEN
+================================================================
+  Arduino Nano ................................ 1
+  Modulo HC-05 ................................ 1
+  Servomotores MG996R ......................... 6 (+3 repuesto)
+  Resistencias 1 kOhm ......................... 3
+  PCB ......................................... 1
+  Tiras hembra (2,54 mm) ..................... 16
+     2 x 1x15 (Nano) - 12 x 1x3 (servos)
+     1 x 1x4 (HC-05) - 1 x 1x8 (analogicas)
+================================================================

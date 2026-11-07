@@ -1,0 +1,288 @@
+================================================================
+     LIMITACIONES Y SOLUCION DE PROBLEMAS
+     Brazo Robótico de 6 Grados de Libertad
+     Complemento del "Manual Técnico y de Usuario"
+================================================================
+
+ Este archivo reúne las limitaciones conocidas del sistema y una
+ guía para resolver los problemas mas comunes. Las limitaciones se
+ separan en dos grupos:
+
+   - HARDWARE: afectan a cualquier programa que se use en el brazo.
+   - FIRMWARE DE REFERENCIA: son propias del programa de prueba
+     desarrollado por el autor y pueden cambiar en un software propio.
+
+ Al final hay una lista de verificación rápida y dos pruebas básicas
+ para aislar fallas.
+
+
+################################################################
+ PARTE 1 - LIMITACIONES Y CONSIDERACIONES
+################################################################
+
+----------------------------------------------------------------
+ 1.1 Limitaciones del hardware
+----------------------------------------------------------------
+
+ [Servomotores]
+  - Los servos trabajan entre 0 y 180 grados. Algunas articulaciones
+    no pueden usar todo ese rango sin que el brazo golpee la
+    superficie de apoyo (ver 1.2).
+  - Si un servo queda forzado contra un tope mecánico o un objeto,
+    consume mucha mas corriente y se calienta. Mantenerlo así por
+    mucho tiempo puede dañarlo.
+  - Durante el proyecto, 3 servos llegaron trabados o rotos y hubo
+    que reemplazarlos. Conviene probar cada servo por separado.
+  - Al energizar, el servo no conoce su posición: se mueve rápido
+    desde donde haya quedado hasta el Angulo inicial que indique el
+    programa.
+
+ [Placa (PCB)]
+  - Por un error en el diseño de la placa, el Arduino Nano queda
+    montado en posición invertida respecto de la orientación
+    prevista. Al armar el sistema hay que respetar la orientación
+    indicada en la Figura 1 del manual.
+  - Los conectores D0 y D1 comparten pines con el puerto USB. Si se
+    conecta algo en ellos, puede fallar la carga del programa o el
+    Monitor Serie.
+
+ [Comunicación Bluetooth]
+  - El HC-05 es Bluetooth clásico (SPP). NO es compatible con
+    Bluetooth de baja energía (BLE): algunos iPhone y apps solo BLE
+    no pueden conectarse.
+  - El alcance típico es de unos 10 metros en espacios abiertos y se
+    reduce con paredes u obstáculos.
+  - El HC-05 se maneja con SoftwareSerial (D12/D13). Este puerto
+    funciona bien a 9600 baudios; a velocidades altas puede perder
+    datos.
+  - Solo un dispositivo puede estar conectado al modulo a la vez.
+
+----------------------------------------------------------------
+ 1.2 Limitaciones del firmware de referencia
+----------------------------------------------------------------
+  - Solo admite los ángulos 0, 90 y 180 por articulación. No hay
+    control continuo de posición (por ejemplo, no acepta C45).
+  - Los limites de seguridad son fijos:
+        Brazo ............ 60 a 120 grados
+        Codo ............. 60 a 120 grados o 30 a 150 grados con "Brazo" quieto en 90
+        Resto ............ 0 a 180 grados
+    Se calcularon con medidas aproximadas del brazo y con margen
+    extra. Si se modifica la estructura, deben revisarse.
+  - La velocidad de movimiento es fija: 1 grado cada 15 ms.
+        90 grados  -> aprox. 1,4 s
+        180 grados -> aprox. 2,7 s
+  - No envía respuestas por Bluetooth. Los mensajes de estado
+    ("llego a", "limitado a", etc.) solo se ven en el Monitor Serie
+    por USB.
+  - Si el sistema se reinicia, todas las articulaciones vuelven a 90
+    grados y se pierde la posición anterior.
+  - Espera que cada comando termine en salto de linea (\n). Si no
+    llega, procesa el comando recién después de 1 segundo.
+  - Los comandos de mas de 5 caracteres se descartan.
+
+
+################################################################
+ PARTE 2 - SOLUCION DE PROBLEMAS
+################################################################
+
+ Formato:  SINTOMA
+             Causa probable -> que hacer
+
+----------------------------------------------------------------
+ 2.1 Bluetooth
+----------------------------------------------------------------
+
+ > El HC-05 no aparece al escanear
+     -> Verificar que el LED del modulo titile (si no titila, el
+        modulo no esta funcionando).
+     -> Verificar que este bien insertado y en el orden correcto:
+        RX, TX, GND, 5V.
+     -> Si ya estaba emparejado con otro dispositivo, puede estar
+        conectado a ese: desconectarlo.
+
+ > El LED titila rápido y no deja de hacerlo
+     Es normal: significa que el modulo espera una conexión.
+     -> Emparejar no alcanza: hay que CONECTARSE desde la app.
+        Una vez conectado, el LED titila mas lento.
+
+ > Se conecta, pero el brazo no responde a ningún comando
+     -> Probar el modulo con el programa de prueba (ver Parte 3).
+     -> Verificar el cruce de líneas: TX del HC-05 a D13, y RX del
+        HC-05 (a través del divisor) a D12. Si están invertidas, no
+        llega nada.
+     -> Verificar que el programa use SoftwareSerial(13, 12) y 9600.
+
+ > Responde, pero con 1 segundo de demora
+     La app no envía el salto de linea.
+     -> Configurar el fin de linea en "Nueva linea" (\n) o "CR+LF".
+
+ > Llegan caracteres raros o símbolos sin sentido
+     La velocidad del modulo no coincide con la del programa.
+     -> Probar con 38400 baudios en el programa de prueba. Si con
+        eso funciona, el HC-05 esta configurado a otra velocidad.
+
+ > El Arduino recibe, pero el celular no recibe nada
+     Falla la linea D12 -> divisor -> RX del HC-05.
+     -> Revisar las resistencias R1, R2 y R3 y sus soldaduras.
+
+ > No conecta desde un iPhone
+     El HC-05 es Bluetooth clasico; iOS no lo admite en apps comunes.
+     -> Usar un celular Android o una PC.
+
+ > El Bluetooth se desconecta solo y el brazo vuelve a 90 grados
+     El Arduino se reinicio.
+     -> Revisar cables y soldaduras: un falso contacto produce este
+        sintoma.
+     -> Evitar mover varias articulaciones a la vez con carga.
+
+----------------------------------------------------------------
+ 2.2 Servomotores
+----------------------------------------------------------------
+
+ > Un servo no se mueve
+     -> Revisar la orientación del conector: cable naranja (señal)
+        en el pad cuadrado, rojo al centro, marrón al restante.
+     -> Verificar que este en el conector correcto (tabla 2.2 del
+        manual).
+     -> Probar el servo solo, en otro conector, para descartar que
+        este dañado (ver Parte 3).
+
+ > Un servo vibra, zumba o tiembla quieto
+     -> Puede estar haciendo fuerza contra un tope mecánico o contra
+        la estructura: revisar que nada lo trabe.
+
+ > Un servo se calienta
+     Esta forzado o bloqueado.
+     -> Desenergizar, revisar la mecánica y, si hace falta, limitar
+        su rango en el programa.
+
+ > Los servos se mueven lento
+     -> Con el firmware de referencia parte es intencional (1 grado
+        cada 15 ms).
+     -> El peso de los eslabones también reduce la velocidad
+        respecto de un servo probado en vacío.
+
+ > Al encender, los servos pegan un salto brusco
+     Normal en el primer encendido: el servo va rápido al Angulo
+     inicial.
+     -> Dejar el brazo cerca de la posición inicial antes de
+        energizar.
+
+ > El brazo golpea la mesa
+     -> Con el firmware de referencia no debería ocurrir. Si ocurre,
+        la estructura cambio respecto de las medidas originales:
+        reducir los limites del Brazo y del Codo.
+     -> En un software propio: agregar limites de Angulo (se pueden
+        tomar como base los del firmware de referencia).
+
+----------------------------------------------------------------
+ 2.3 Firmware de referencia
+----------------------------------------------------------------
+
+ > Una articulacion no llega al angulo pedido
+     Es el limite de seguridad. El Monitor Serie muestra
+     "limitado a [...]".
+
+ > El Codo no pasa de 120 grados
+     El Brazo no esta en 90 o todavia se esta moviendo.
+     -> Enviar B90, esperar a que llegue ("Brazo llego a 90 grados")
+        y repetir el comando del Codo.
+
+ > Al mover el Brazo, primero se mueve el Codo
+     Es la secuencia automatica de seguridad: el Codo vuelve a su
+     rango normal antes de que el Brazo baje.
+
+ > "Comando no valido"
+     -> Revisar que el comando exista en la tabla del manual
+        (solo 0, 90 y 180).
+
+ > "Comando demasiado largo"
+     -> El comando supera los 5 caracteres; revisar que la app no
+        agregue texto extra.
+
+----------------------------------------------------------------
+ 2.4 Placa (PCB)
+----------------------------------------------------------------
+
+ > El Arduino Nano parece estar montado al reves
+     Es correcto: por un error de diseño de la placa, el Nano va
+     montado en posicion invertida.
+     -> Colocarlo segun la Figura 1 del manual: conector USB hacia el
+        borde inferior y pin D1/TX (pad cuadrado) del lado de los
+        conectores de servo.
+
+ > Nada funciona despues de colocar el Nano
+     -> Verificar que este en la orientacion de la Figura 1. Si se
+        coloco en otra posicion, retirarlo antes de volver a
+        encender.
+
+----------------------------------------------------------------
+ 2.5 Programacion del Arduino
+----------------------------------------------------------------
+
+ > "Acceso denegado" o "cannot open port COMx" al subir el programa
+     Otro programa tiene el puerto ocupado.
+     -> Cerrar el Monitor Serie y el Serial Plotter.
+     -> Cerrar otras ventanas del Arduino IDE y programas que usen
+        puertos serie (terminales, slicers de impresion 3D, etc.).
+     -> Desconectar y volver a conectar el USB; si sigue, reiniciar
+        el IDE o la PC.
+
+ > El puerto no aparece en Herramientas -> Puerto
+     -> Probar otro cable USB (algunos solo cargan, no transmiten
+        datos).
+     -> Los Nano clones con chip CH340 necesitan su driver.
+
+ > Error de sincronizacion ("not in sync" / "stk500")
+     -> En Herramientas -> Procesador, probar "ATmega328P (Old
+        Bootloader)", habitual en Nano clones.
+     -> Verificar que no haya nada conectado en D0/D1.
+
+ > El Monitor Serie muestra caracteres raros
+     -> Ponerlo a 9600 baudios.
+
+
+################################################################
+ PARTE 3 - PRUEBAS BASICAS
+################################################################
+
+----------------------------------------------------------------
+ 3.1 Lista de verificacion antes de energizar
+----------------------------------------------------------------
+  [ ] Nano insertado segun la Figura 1 del manual (va invertido
+      por un error de diseño de la placa)
+  [ ] Cada servo en su conector, cable naranja en el pad cuadrado
+  [ ] HC-05 insertado en el orden RX, TX, GND, 5V
+  [ ] Nada conectado en D0 / D1
+  [ ] Brazo cerca de la posicion inicial
+  [ ] Sin objetos en el recorrido del brazo
+
+----------------------------------------------------------------
+ 3.2 Prueba del modulo Bluetooth (sin servos)
+----------------------------------------------------------------
+  1. Cargar el programa de prueba del modulo (Listado 1 del informe)
+     y abrir el Monitor Serie a 9600 baudios.
+  2. Conectarse al HC-05 desde "Serial Bluetooth Terminal".
+  3. Enviar un texto desde el celular -> debe verse en el Monitor.
+  4. Escribir en el Monitor y apretar Enter -> debe llegar al
+     celular.
+
+     Resultado                          Revisar
+     ---------------------------------  -----------------------------
+     No aparece nada en el Monitor      TX del HC-05 -> D13
+     No llega nada al celular           D12 -> divisor -> RX del HC-05
+     Aparecen caracteres raros          Velocidad (probar 38400)
+
+----------------------------------------------------------------
+ 3.3 Prueba de un servo por separado
+----------------------------------------------------------------
+  1. Desmontar el servo del brazo (o dejarlo libre de carga) y
+     conectar SOLO ese servo en el conector D3 (Dedos), que con el
+     firmware de referencia tiene rango completo.
+  2. Enviar D0, D90 y D180.
+  3. El servo debe recorrer todo el rango sin trabarse ni zumbar.
+  4. Si no se mueve, probar con otro servo en el mismo conector:
+     si el otro funciona, el primero esta danado; si tampoco se
+     mueve, revisar el conector.
+
+================================================================
