@@ -10,7 +10,13 @@
 
    - HARDWARE: afectan a cualquier programa que se use en el brazo.
    - FIRMWARE DE REFERENCIA: son propias del programa de prueba
-     desarrollado por el autor y pueden cambiar en un software propio.
+     desarrollado para el proyecto y pueden cambiar en un software propio.
+
+ NOTA: las secciones 1.2 y 2.3 corresponden a la version anterior del
+ firmware (firmware/version_anterior). El firmware actual
+ (firmware/brazo_robusto) acepta cualquier angulo entre 0 y 180,
+ responde por Bluetooth y guarda la posicion en EEPROM: ver
+ docs/comandos-bluetooth.md.
 
  Al final hay una lista de verificación rápida y dos pruebas básicas
  para aislar fallas.

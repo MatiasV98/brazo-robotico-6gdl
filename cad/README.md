@@ -6,7 +6,7 @@ Modelos 3D del proyecto.
 
 | Archivo | Descripción |
 |---|---|
-| `CAJA ROBOT.f3d` | Diseño de la caja (carcasa) que protege la electrónica del brazo. |
+| `carcasa_electronica.f3d` | Diseño de la caja (carcasa) que protege la electrónica del brazo. |
 
 La carcasa se imprimió en 3D en **PLA**, en una impresora Bambu Lab A1 del Laboratorio de Técnicas Digitales III. Una imagen del diseño está en [`docs/img/carcasa.jpg`](../docs/img/carcasa.jpg).
 

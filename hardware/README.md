@@ -4,16 +4,15 @@ Diseño de la placa de control del brazo robótico (PCB), realizado en **KiCad 1
 
 ## Contenido
 
-### `Placa Definitiva-Proyecto Brazo Robotico/` — Proyecto de KiCad (archivos fuente)
+### `kicad/` — Proyecto de KiCad (archivos fuente)
 
 | Archivo | Descripción |
 |---|---|
 | `.kicad_pro` | Proyecto |
 | `.kicad_sch` | Esquemático |
 | `.kicad_pcb` | Diseño de la PCB |
-| `.kicad_prl` | Preferencias locales del proyecto |
 
-### `Archivos Gerber/` — Archivos de fabricación (Gerber y taladrado)
+### `fabricacion/` — Archivos de fabricación (Gerber y taladrado)
 
 | Archivo | Descripción |
 |---|---|
@@ -31,7 +30,7 @@ Diseño de la placa de control del brazo robótico (PCB), realizado en **KiCad 1
 
 Todos los archivos comienzan con `Placa Definitiva-Proyecto Brazo Robotico`.
 
-Para abrir el diseño: abrir `Placa Definitiva-Proyecto Brazo Robotico.kicad_pro` con KiCad 10 o superior.
+Para abrir el diseño: abrir `kicad/Placa Definitiva-Proyecto Brazo Robotico.kicad_pro` con KiCad 10 o superior.
 
 ## La placa
 
@@ -59,7 +58,7 @@ Componentes que aloja:
 | Brazo | D10 |
 | Hombro | D11 |
 
-La guía de conexión completa está en el manual técnico (`docs/Manual_Tecnico_Brazo_Robotico.docx`) y la lista de materiales en `docs/Materiales_Brazo_Robotico.txt`.
+La guía de conexión completa está en el manual técnico (`docs/Manual_Tecnico_Brazo_Robotico.pdf`) y la lista de materiales en `docs/Materiales_Brazo_Robotico.txt`.
 
 ## Observaciones
 

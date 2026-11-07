@@ -20,7 +20,7 @@ Desarrollado en el marco de una **beca de servicio 2026** del Laboratorio de Té
   <img src="docs/img/brazo.jpg" alt="Brazo robótico de 6 grados de libertad" width="420">
 </p>
 
-> **⚠️ Alimentar por separado el Arduino y los servos.** Si el Nano toma energía del mismo riel que
+> **Importante: alimentar por separado el Arduino y los servos.** Si el Nano toma energía del mismo riel que
 > los MG996R, los picos de corriente de los servos lo reinician y el brazo "se cae". Con el Arduino
 > alimentado aparte y GND común, los reinicios desaparecieron. Detalle en
 > [`docs/alimentacion-y-reinicios.md`](docs/alimentacion-y-reinicios.md).
@@ -103,7 +103,7 @@ en PLA en una Bambu Lab A1 del Laboratorio de Técnicas Digitales III:
 ## Cómo usarlo
 
 1. Armar la placa y conectar los servos según el manual técnico
-   (`docs/Manual_Tecnico_Brazo_Robotico.docx`), con el Arduino alimentado aparte y GND común.
+   (`docs/Manual_Tecnico_Brazo_Robotico.pdf`), con el Arduino alimentado aparte y GND común.
 2. Cargar `firmware/brazo_robusto` en el Nano con Arduino IDE (librerías `Servo`, `SoftwareSerial` y
    `EEPROM`, incluidas en el IDE). En clones del Nano, elegir *ATmega328P (Old Bootloader)*.
 3. Abrir `web/control_brazo.html` y conectar al HC-05. También se puede controlar con cualquier
