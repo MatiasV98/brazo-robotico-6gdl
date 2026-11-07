@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Control Brazo Robótico</title>
+<style>
+  :root{
+    --bg:#14171c; --card:#1d2229; --borde:#2c333d; --texto:#e8ecf1; --suave:#8b95a3;
+    --acento:#3fa7ff; --ok:#38c172; --rojo:#e5484d; --amarillo:#f5a524;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--texto)}
+  header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;
+         padding:14px 18px;border-bottom:1px solid var(--borde);position:sticky;top:0;background:var(--bg);z-index:5}
+  h1{font-size:18px;margin:0;font-weight:600}
+  .estado{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--suave)}
+  .punto{width:10px;height:10px;border-radius:50%;background:var(--rojo)}
+  .punto.on{background:var(--ok)}
+  .botones{display:flex;gap:8px;flex-wrap:wrap}
+  button{font:inherit;border:1px solid var(--borde);background:var(--card);color:var(--texto);
+         padding:9px 14px;border-radius:10px;cursor:pointer;touch-action:manipulation}
+  button:hover{border-color:var(--acento)}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  button.primario{background:var(--acento);border-color:var(--acento);color:#04121f;font-weight:600}
+  #btnParada{background:var(--rojo);border-color:var(--rojo);color:#fff;font-weight:700;letter-spacing:.5px}
+  main{max-width:1100px;margin:0 auto;padding:18px;display:grid;gap:16px}
+  .aviso{background:#3a2a10;border:1px solid var(--amarillo);color:#ffd99a;padding:12px 14px;border-radius:10px;font-size:14px;display:none}
+  .grilla{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px}
+  .art{background:var(--card);border:1px solid var(--borde);border-radius:14px;padding:14px 16px}
+  .art .fila{display:flex;justify-content:space-between;align-items:baseline}
+  .art .nombre{font-weight:600;font-size:16px}
+  .art .tecla{font-size:12px;color:var(--suave)}
+  .art .valor{font-size:30px;font-weight:700;font-variant-numeric:tabular-nums}
+  .art .real{font-size:12px;color:var(--suave);min-height:16px}
+  input[type=range]{width:100%;height:44px;accent-color:var(--acento);margin:6px 0}
+  .rapidos{display:flex;gap:6px}
+  .rapidos button{flex:1;padding:8px 0}
+  .rango{font-size:12px;color:var(--suave);margin-top:6px}
+  #log{background:#0d0f12;border:1px solid var(--borde);border-radius:10px;padding:10px;height:180px;overflow:auto;
+       font:12px/1.5 ui-monospace,Consolas,monospace;color:#b7c0cc;white-space:pre-wrap}
+  .envio{color:var(--acento)} .recibo{color:var(--ok)} .error{color:var(--rojo)}
+  .pie{font-size:12px;color:var(--suave)}
+  /* ---------- Joystick ---------- */
+  .panelJoy{background:var(--card);border:1px solid var(--borde);border-radius:14px;padding:16px}
+  .panelJoy h2{font-size:16px;margin:0 0 4px}
+  .panelJoy .sub{font-size:12px;color:var(--suave);margin-bottom:14px}
+  .joys{display:flex;flex-wrap:wrap;gap:20px;justify-content:space-around;align-items:center}
+  .joyBox{display:flex;flex-direction:column;align-items:center;gap:6px}
+  .ejeY{font-size:12px;color:var(--suave);text-align:center}
+  .ejeFila{display:flex;align-items:center;gap:8px}
+  .ejeX{font-size:12px;color:var(--suave);width:58px;text-align:center}
+  .pad{width:190px;height:190px;border-radius:50%;position:relative;touch-action:none;user-select:none;
+       background:radial-gradient(circle at 50% 50%,#252c35 0,#1a1f26 70%);border:2px solid var(--borde)}
+  .pad::before,.pad::after{content:"";position:absolute;background:var(--borde)}
+  .pad::before{left:50%;top:10%;bottom:10%;width:1px}
+  .pad::after{top:50%;left:10%;right:10%;height:1px}
+  .knob{width:74px;height:74px;border-radius:50%;position:absolute;left:58px;top:58px;z-index:2;
+        background:radial-gradient(circle at 35% 30%,#7cc4ff,var(--acento) 60%,#1f6fb3);
+        box-shadow:0 4px 14px rgba(0,0,0,.5);pointer-events:none}
+  .pad.activo{border-color:var(--acento)}
+  .centro{display:flex;flex-direction:column;gap:10px;align-items:stretch;min-width:190px}
+  .centro .grupo{font-size:12px;color:var(--suave);text-align:center}
+  .par{display:flex;gap:8px}
+  .par button{flex:1;padding:16px 0;font-size:15px;user-select:none;-webkit-user-select:none}
+  .par button.pulsado{background:var(--acento);color:#04121f;border-color:var(--acento)}
+  .vel{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--suave)}
+  .vel input{flex:1;height:30px}
+  .gp{font-size:12px;color:var(--suave);text-align:center;margin-top:10px}
+  .gp.on{color:var(--ok)}
+  /* ---------- Pestañas ---------- */
+  .tabs{display:flex;gap:6px;max-width:1100px;margin:0 auto;padding:14px 18px 0}
+  .tabs a{flex:1;text-align:center;text-decoration:none;color:var(--suave);padding:12px;border-radius:12px 12px 0 0;
+          border:1px solid var(--borde);border-bottom:none;background:#171b21;font-weight:600}
+  .tabs a.activa{color:var(--texto);background:var(--card);border-color:var(--acento)}
+  .vista{display:none;gap:16px}
+  .vista.activa{display:grid}
+  #btnSaludo{background:#2a2140;border-color:#7c5cff}
+  .bloqueo{display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;color:var(--texto);margin-top:12px}
+  .bloqueo input{width:18px;height:18px;accent-color:var(--acento)}
+  .secuencia{font-size:13px;color:#c9b8ff;text-align:center;min-height:18px}
+  .manual{display:flex;gap:8px}
+  .manual input{flex:1;font:inherit;padding:9px 12px;border-radius:10px;border:1px solid var(--borde);background:var(--card);color:var(--texto)}
+</style>
+</head>
+<body>
+<header>
+  <h1>🦾 Brazo Robótico — TDII</h1>
+  <div class="estado"><span class="punto" id="punto"></span><span id="txtEstado">Desconectado</span></div>
+  <div class="botones">
+    <button class="primario" id="btnConectar">Conectar</button>
+    <button id="btnEstado" disabled>Leer estado</button>
+    <button id="btnInicio" disabled>Posición inicial</button>
+    <button id="btnSaludo" disabled>👋 Saludo</button>
+    <button id="btnParada">PARADA (Espacio)</button>
+  </div>
+</header>
+
+<nav class="tabs">
+  <a href="#joystick" id="tabJoy">🎮 Joystick</a>
+  <a href="#barras" id="tabBarras">🎚️ Barras</a>
+</nav>
+
+<main>
+  <div class="aviso" id="aviso">
+    Este navegador no soporta Web Serial. Abrí esta página con <b>Google Chrome</b> o <b>Microsoft Edge</b>
+    en la compu, o con <b>Chrome</b> en Android.
+  </div>
+
+  <div class="secuencia" id="txtSecuencia"></div>
+
+  <div class="vista" id="vistaJoy">
+  <section class="panelJoy">
+    <h2>🎮 Joystick</h2>
+    <div class="sub">Empujá la palanca y el brazo se mueve mientras la mantengas. Al soltar, se queda quieto donde está.
+      Cuanto más la empujás, más rápido va.</div>
+    <div class="joys">
+      <div class="joyBox">
+        <div class="ejeY">▲ Brazo +</div>
+        <div class="ejeFila">
+          <div class="ejeX">◀ Hombro −</div>
+          <div class="pad" id="padIzq"><div class="knob"></div></div>
+          <div class="ejeX">Hombro + ▶</div>
+        </div>
+        <div class="ejeY">▼ Brazo −</div>
+      </div>
+
+      <div class="centro">
+        <div class="grupo">Dedos</div>
+        <div class="par"><button data-hold="D" data-dir="-1">Abrir</button><button data-hold="D" data-dir="1">Cerrar</button></div>
+        <div class="grupo">Mano</div>
+        <div class="par"><button data-hold="MA" data-dir="-1">Subir</button><button data-hold="MA" data-dir="1">Bajar</button></div>
+        <div class="vel">Velocidad <input type="range" id="velJoy" min="10" max="66" value="45"><span id="velTxt">45°/s</span></div>
+      </div>
+
+      <div class="joyBox">
+        <div class="ejeY">▲ Codo +</div>
+        <div class="ejeFila">
+          <div class="ejeX">◀ Muñeca −</div>
+          <div class="pad" id="padDer"><div class="knob"></div></div>
+          <div class="ejeX">Muñeca + ▶</div>
+        </div>
+        <div class="ejeY">▼ Codo −</div>
+      </div>
+    </div>
+    <label class="bloqueo"><input type="checkbox" id="chkUno" checked>
+      Mover un solo servo a la vez (recomendado: evita picos de corriente)</label>
+    <div class="gp" id="gpEstado">Control físico (Xbox/PlayStation/genérico): conectalo y apretá cualquier botón.</div>
+  </section>
+  </div>
+
+  <div class="vista" id="vistaBarras">
+    <div class="grilla" id="grilla"></div>
+  </div>
+
+  <div class="manual">
+    <input id="txtManual" placeholder="Comando manual (ej: C75, MU120, ?)" autocomplete="off">
+    <button id="btnManual" disabled>Enviar</button>
+  </div>
+
+  <div id="log"></div>
+  <div class="pie">
+    Teclado: Q/A Dedos · W/S Muñeca · E/D Mano · R/F Codo · T/G Brazo · Y/H Hombro (±5°) · Espacio = PARADA.
+    Los límites finales los pone el Arduino: si pedís de más, la palanca vuelve sola al valor permitido.
+  </div>
+</main>
+
+<script>
+// ------------------------------------------------------------
+// Articulaciones: deben coincidir con el firmware
+// ------------------------------------------------------------
+const ARTICULACIONES = [
+  { id:'D',  nombre:'Dedos',  min:0,  max:180, inicio:90, teclas:['q','a'], nota:'0 abiertos · 180 cerrados' },
+  { id:'MU', nombre:'Muñeca', min:0,  max:180, inicio:90, teclas:['w','s'], nota:'0 derecha · 180 izquierda' },
+  { id:'MA', nombre:'Mano',   min:0,  max:180, inicio:90, teclas:['e','d'], nota:'0 elevada · 180 baja' },
+  { id:'C',  nombre:'Codo',   min:30, max:150, inicio:90, teclas:['r','f'], nota:'60–120 · hasta 30–150 con Brazo quieto en 90' },
+  { id:'B',  nombre:'Brazo',  min:60, max:120, inicio:90, teclas:['t','g'], nota:'60–120' },
+  { id:'H',  nombre:'Hombro', min:0,  max:180, inicio:90, teclas:['y','h'], nota:'0–180' },
+];
+const SPP_UUID = '00001101-0000-1000-8000-00805f9b34fb';
+const INTERVALO_ENVIO_MS = 90;   // separación entre comandos (el HC-05 + SoftwareSerial es lento)
+
+let puerto = null, escritor = null, lector = null, conectado = false;
+const pendientes = new Map();     // id -> ángulo (solo el último valor de cada articulación)
+const colaTexto = [];             // comandos sueltos (X, ?, manual)
+const ui = {};                    // elementos por articulación
+let arrastrando = null;
+
+// ------------------------------------------------------------
+// Interfaz
+// ------------------------------------------------------------
+const $ = id => document.getElementById(id);
+
+function crearTarjetas(){
+  const grilla = $('grilla');
+  for (const a of ARTICULACIONES){
+    const div = document.createElement('div');
+    div.className = 'art';
+    div.innerHTML = `
+      <div class="fila"><span class="nombre">${a.nombre}</span>
+        <span class="tecla">${a.teclas[0].toUpperCase()} / ${a.teclas[1].toUpperCase()} · ${a.id}</span></div>
+      <div class="fila"><span class="valor">${a.inicio}°</span><span class="real"></span></div>
+      <input type="range" min="${a.min}" max="${a.max}" step="1" value="${a.inicio}">
+      <div class="rapidos">
+        <button data-d="-5">−5</button><button data-v="${a.min}">${a.min}</button>
+        <button data-v="${a.inicio}">${a.inicio}</button><button data-v="${a.max}">${a.max}</button>
+        <button data-d="5">+5</button>
+      </div>
+      <div class="rango">${a.nota}</div>`;
+    grilla.appendChild(div);
+
+    const slider = div.querySelector('input');
+    ui[a.id] = { slider, valor: div.querySelector('.valor'), real: div.querySelector('.real'), art: a };
+
+    slider.addEventListener('input', () => { mostrar(a.id, +slider.value); pedir(a.id, +slider.value); });
+    slider.addEventListener('pointerdown', () => arrastrando = a.id);
+    slider.addEventListener('pointerup',   () => arrastrando = null);
+    div.querySelectorAll('.rapidos button').forEach(b => b.addEventListener('click', () => {
+      const v = b.dataset.v !== undefined ? +b.dataset.v : +slider.value + +b.dataset.d;
+      fijar(a.id, v);
+    }));
+  }
+}
+
+function mostrar(id, v){ ui[id].valor.textContent = v + '°'; }
+
+function fijar(id, v){
+  const a = ui[id].art;
+  v = Math.max(a.min, Math.min(a.max, Math.round(v)));
+  ui[id].slider.value = v;
+  mostrar(id, v);
+  pedir(id, v);
+}
+
+function log(texto, clase=''){
+  const el = $('log');
+  const linea = document.createElement('div');
+  linea.className = clase;
+  linea.textContent = new Date().toLocaleTimeString() + '  ' + texto;
+  el.appendChild(linea);
+  while (el.childNodes.length > 300) el.removeChild(el.firstChild);
+  el.scrollTop = el.scrollHeight;
+}
+
+function ponerEstado(on, texto){
+  conectado = on;
+  $('punto').classList.toggle('on', on);
+  $('txtEstado').textContent = texto;
+  $('btnConectar').textContent = on ? 'Desconectar' : 'Conectar';
+  ['btnEstado','btnInicio','btnSaludo','btnManual'].forEach(b => $(b).disabled = !on);
+}
+
+// ------------------------------------------------------------
+// Envío: cola con separación fija para no saturar al Arduino
+// ------------------------------------------------------------
+function pedir(id, v){ pendientes.set(id, v); }
+function enviarTexto(cmd){ colaTexto.push(cmd); }
+
+async function escribir(cmd){
+  if (!escritor) return;
+  try {
+    await escritor.write(new TextEncoder().encode(cmd + '\n'));
+    log('→ ' + cmd, 'envio');
+  } catch (e) { log('Error al enviar: ' + e.message, 'error'); desconectar(); }
+}
+
+setInterval(() => {
+  if (!conectado) return;
+  if (colaTexto.length){ escribir(colaTexto.shift()); return; }
+  const it = pendientes.entries().next();
+  if (!it.done){ const [id, v] = it.value; pendientes.delete(id); escribir(id + v); }
+}, INTERVALO_ENVIO_MS);
+
+function parada(){
+  pendientes.clear();
+  colaTexto.length = 0;
+  if (escritor) escribir('X');         // la parada sale en el momento, sin esperar la cola
+  setTimeout(() => enviarTexto('?'), 300);
+}
+
+// ------------------------------------------------------------
+// Recepción: sincroniza las palancas con lo que dice el Arduino
+// ------------------------------------------------------------
+const PREFIJOS = ['MU','MA','D','C','B','H'];
+
+function partirToken(tok){
+  for (const p of PREFIJOS) if (tok.startsWith(p) && /^\d+$/.test(tok.slice(p.length)))
+    return [p, +tok.slice(p.length)];
+  return null;
+}
+
+function procesarLinea(linea){
+  linea = linea.trim();
+  if (!linea) return;
+  log('← ' + linea, linea.startsWith('ERR') ? 'error' : 'recibo');
+
+  if (linea.startsWith('SECUENCIA ') && !linea.includes('CANCELADA')){
+    $('txtSecuencia').textContent = '▶ Ejecutando secuencia ' + linea.slice(10) + '… (PARADA o mover algo la cancela)';
+    return;
+  }
+  if (linea.startsWith('FIN SECUENCIA') || linea.startsWith('SECUENCIA CANCELADA') || linea.startsWith('PARADA')){
+    $('txtSecuencia').textContent = '';
+    if (!linea.startsWith('PARADA')) enviarTexto('?');
+    return;
+  }
+  if (linea.startsWith('INICIO')){                 // el Arduino se reinició
+    log('El Arduino se reinició. Sincronizando…', 'error');
+    setTimeout(() => enviarTexto('?'), 600);
+    return;
+  }
+  if (linea.startsWith('OK ')){                     // "OK C120": valor permitido real
+    const r = partirToken(linea.slice(3).trim());
+    if (r && arrastrando !== r[0] && !pendientes.has(r[0]) && !enUso.has(r[0])){
+      ui[r[0]].slider.value = r[1]; mostrar(r[0], r[1]);
+    }
+    if (r) ui[r[0]].real.textContent = 'Arduino: ' + r[1] + '°';
+    return;
+  }
+  // Respuesta de "?": "D90 MU90 MA90 C90 B90 H90"
+  const tokens = linea.split(/\s+/).map(partirToken);
+  if (tokens.length >= 6 && tokens.every(Boolean)){
+    for (const [id, v] of tokens){
+      ui[id].slider.value = v; mostrar(id, v);
+      ui[id].real.textContent = 'Arduino: ' + v + '°';
+    }
+  }
+}
+
+async function bucleLectura(){
+  let resto = '';
+  const dec = new TextDecoder();
+  while (puerto && puerto.readable && conectado){
+    lector = puerto.readable.getReader();
+    try {
+      while (true){
+        const { value, done } = await lector.read();
+        if (done) break;
+        resto += dec.decode(value, { stream: true });
+        const lineas = resto.split(/\r?\n/);
+        resto = lineas.pop();
+        lineas.forEach(procesarLinea);
+      }
+    } catch (e) {
+      log('Se cortó la conexión: ' + e.message, 'error');
+      break;
+    } finally {
+      lector.releaseLock(); lector = null;
+    }
+  }
+  if (conectado) desconectar();
+}
+
+// ------------------------------------------------------------
+// Conexión
+// ------------------------------------------------------------
+async function conectar(){
+  try {
+    puerto = await navigator.serial.requestPort({ allowedBluetoothServiceClassIds: [SPP_UUID] });
+    await puerto.open({ baudRate: 9600 });
+    escritor = puerto.writable.getWriter();
+    ponerEstado(true, 'Conectado');
+    log('Conectado. Pidiendo estado al brazo…');
+    bucleLectura();
+    setTimeout(() => enviarTexto('?'), 400);
+  } catch (e) {
+    if (e.name !== 'NotFoundError') log('No se pudo conectar: ' + e.message, 'error');
+    puerto = null;
+  }
+}
+
+async function desconectar(){
+  ponerEstado(false, 'Desconectado');
+  pendientes.clear(); colaTexto.length = 0;
+  try { if (lector) await lector.cancel(); } catch {}
+  try { if (escritor){ escritor.releaseLock(); escritor = null; } } catch {}
+  try { if (puerto) await puerto.close(); } catch {}
+  puerto = null;
+  log('Desconectado');
+}
+
+// ------------------------------------------------------------
+// Eventos
+// ------------------------------------------------------------
+crearTarjetas();
+
+if (!('serial' in navigator)){
+  $('aviso').style.display = 'block';
+  $('btnConectar').disabled = true;
+}
+
+$('btnConectar').onclick = () => conectado ? desconectar() : conectar();
+$('btnParada').onclick   = parada;
+$('btnEstado').onclick   = () => enviarTexto('?');
+// Las dos son secuencias que ejecuta el Arduino (también andan desde Serial Bluetooth Terminal)
+$('btnInicio').onclick   = () => { pendientes.clear(); enviarTexto('I'); };
+$('btnSaludo').onclick   = () => { pendientes.clear(); enviarTexto('S'); };
+
+// Pestañas: es una sola página, así la conexión Bluetooth no se corta al cambiar
+function mostrarVista(){
+  const barras = location.hash === '#barras';
+  $('vistaJoy').classList.toggle('activa', !barras);
+  $('vistaBarras').classList.toggle('activa', barras);
+  $('tabJoy').classList.toggle('activa', !barras);
+  $('tabBarras').classList.toggle('activa', barras);
+}
+window.addEventListener('hashchange', mostrarVista);
+mostrarVista();
+
+function enviarManual(){
+  const t = $('txtManual').value.trim().toUpperCase().replace(/\s+/g,'');
+  if (!t) return;
+  if (t === 'X') parada(); else enviarTexto(t);
+  $('txtManual').value = '';
+}
+$('btnManual').onclick = enviarManual;
+$('txtManual').addEventListener('keydown', e => { if (e.key === 'Enter') enviarManual(); });
+
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' && e.target.type !== 'range') return;
+  if (e.code === 'Space' || e.key === 'Escape'){ e.preventDefault(); parada(); return; }
+  const k = e.key.toLowerCase();
+  for (const a of ARTICULACIONES){
+    if (k === a.teclas[0]) fijar(a.id, +ui[a.id].slider.value + 5);
+    if (k === a.teclas[1]) fijar(a.id, +ui[a.id].slider.value - 5);
+  }
+});
+
+// ------------------------------------------------------------
+// JOYSTICK (control por velocidad)
+// La palanca da una velocidad; el ángulo se va sumando mientras esté empujada.
+// ------------------------------------------------------------
+// Si alguna articulación se mueve al revés de lo que dice la etiqueta, cambiá su 1 por -1
+const INVERTIR = { D:1, MU:1, MA:1, C:1, B:1, H:1 };
+const ZONA_MUERTA = 0.15;
+
+const ejes = { H:0, B:0, MU:0, C:0, D:0, MA:0 };   // -1..1 de cada fuente táctil/mouse
+const ejesGP = { H:0, B:0, MU:0, C:0, D:0, MA:0 }; // -1..1 del control físico
+const acumulado = {};                               // ángulo con decimales
+const enUso = new Set();
+
+function velocidad(){ return +$('velJoy').value; }
+$('velJoy').oninput = () => $('velTxt').textContent = velocidad() + '°/s';
+
+// Límites que va a aceptar el Arduino (el Codo depende del Brazo)
+function limites(id){
+  const a = ui[id].art;
+  if (id === 'C'){
+    const brazoEn90 = +ui.B.slider.value === 90 && !enUso.has('B');
+    return brazoEn90 ? [30,150] : [60,120];
+  }
+  return [a.min, a.max];
+}
+
+function armarPad(idPad, idX, idY){
+  const pad = $(idPad), knob = pad.querySelector('.knob');
+  let puntero = null;
+
+  function mover(e){
+    const r = pad.getBoundingClientRect();
+    const radio = r.width / 2;
+    let dx = (e.clientX - r.left - radio) / radio;
+    let dy = (e.clientY - r.top  - radio) / radio;
+    const m = Math.hypot(dx, dy);
+    if (m > 1){ dx /= m; dy /= m; }
+    knob.style.transform = `translate(${dx * radio * 0.62}px, ${dy * radio * 0.62}px)`;
+    ejes[idX] = Math.abs(dx) < ZONA_MUERTA ? 0 : dx;
+    ejes[idY] = Math.abs(dy) < ZONA_MUERTA ? 0 : -dy;    // arriba = positivo
+  }
+  function soltar(){
+    puntero = null;
+    pad.classList.remove('activo');
+    knob.style.transition = 'transform .15s';
+    knob.style.transform = 'translate(0,0)';
+    ejes[idX] = 0; ejes[idY] = 0;
+  }
+  pad.addEventListener('pointerdown', e => {
+    puntero = e.pointerId;
+    pad.setPointerCapture(e.pointerId);
+    pad.classList.add('activo');
+    knob.style.transition = 'none';
+    mover(e);
+  });
+  pad.addEventListener('pointermove', e => { if (e.pointerId === puntero) mover(e); });
+  pad.addEventListener('pointerup', soltar);
+  pad.addEventListener('pointercancel', soltar);
+  pad.addEventListener('lostpointercapture', soltar);
+}
+armarPad('padIzq', 'H', 'B');
+armarPad('padDer', 'MU', 'C');
+
+// Botones que se mantienen apretados (Dedos y Mano)
+document.querySelectorAll('[data-hold]').forEach(b => {
+  const id = b.dataset.hold, dir = +b.dataset.dir;
+  const on  = e => { e.preventDefault(); b.classList.add('pulsado'); ejes[id] = dir; };
+  const off = () => { b.classList.remove('pulsado'); if (ejes[id] === dir) ejes[id] = 0; };
+  b.addEventListener('pointerdown', on);
+  b.addEventListener('pointerup', off);
+  b.addEventListener('pointerleave', off);
+  b.addEventListener('pointercancel', off);
+  b.addEventListener('contextmenu', e => e.preventDefault());
+});
+
+// Control físico por Gamepad API
+// Stick izq: Hombro/Brazo · Stick der: Muñeca/Codo · LB/RB: Dedos · LT/RT: Mano · B/Círculo: PARADA
+let paradaGPprevia = false;
+function leerGamepad(){
+  const gp = [...(navigator.getGamepads ? navigator.getGamepads() : [])].find(g => g);
+  for (const k in ejesGP) ejesGP[k] = 0;
+  if (!gp) return;
+  $('gpEstado').textContent = 'Control conectado: ' + gp.id.slice(0, 40) +
+    ' · Sticks: brazo · LB/RB: dedos · LT/RT: mano · B/Círculo: PARADA';
+  $('gpEstado').classList.add('on');
+  const z = v => Math.abs(v) < ZONA_MUERTA ? 0 : v;
+  const btn = i => gp.buttons[i] ? gp.buttons[i].value : 0;
+  ejesGP.H  = z(gp.axes[0] || 0);
+  ejesGP.B  = -z(gp.axes[1] || 0);
+  ejesGP.MU = z(gp.axes[2] || 0);
+  ejesGP.C  = -z(gp.axes[3] || 0);
+  ejesGP.D  = btn(5) - btn(4);
+  ejesGP.MA = btn(7) - btn(6);
+  const paradaGP = btn(1) > 0.5;
+  if (paradaGP && !paradaGPprevia) parada();
+  paradaGPprevia = paradaGP;
+}
+window.addEventListener('gamepaddisconnected', () => {
+  $('gpEstado').textContent = 'Control desconectado';
+  $('gpEstado').classList.remove('on');
+});
+
+let activoJoy = null;
+let tAnterior = performance.now();
+function cicloJoystick(t){
+  const dt = Math.min((t - tAnterior) / 1000, 0.1);
+  tAnterior = t;
+  leerGamepad();
+
+  // Velocidad pedida por cada articulación
+  const vel = {};
+  for (const id of Object.keys(ejes))
+    vel[id] = Math.max(-1, Math.min(1, ejes[id] + ejesGP[id])) * INVERTIR[id];
+
+  // Un servo a la vez: sigue el que ya se estaba moviendo; si no hay, el más empujado
+  if ($('chkUno').checked){
+    let elegido = (activoJoy && vel[activoJoy] !== 0) ? activoJoy : null;
+    if (!elegido){
+      let max = 0;
+      for (const id in vel) if (Math.abs(vel[id]) > max){ max = Math.abs(vel[id]); elegido = id; }
+    }
+    for (const id in vel) if (id !== elegido) vel[id] = 0;
+    activoJoy = elegido;
+  }
+
+  for (const id of Object.keys(ejes)){
+    const v = vel[id];
+
+    if (v === 0){
+      if (enUso.has(id)) enUso.delete(id);
+      acumulado[id] = +ui[id].slider.value;     // queda sincronizado con la palanca/Arduino
+      continue;
+    }
+    if (!enUso.has(id)){ enUso.add(id); acumulado[id] = +ui[id].slider.value; }
+
+    const [lo, hi] = limites(id);
+    acumulado[id] = Math.max(lo, Math.min(hi, acumulado[id] + v * velocidad() * dt));
+    const entero = Math.round(acumulado[id]);
+    if (entero !== +ui[id].slider.value){
+      ui[id].slider.value = entero;
+      mostrar(id, entero);
+      pedir(id, entero);
+    }
+  }
+  requestAnimationFrame(cicloJoystick);
+}
+requestAnimationFrame(cicloJoystick);
+
+if ('serial' in navigator){
+  navigator.serial.addEventListener('disconnect', e => { if (e.target === puerto) { log('El dispositivo se desconectó', 'error'); desconectar(); } });
+}
+</script>
+</body>
+</html>
